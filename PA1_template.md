@@ -7,8 +7,9 @@ First read in the data and format the date properly
 stepData <- read.csv("./activity.csv", header = TRUE)
 stepData$date <- as.Date(stepData$date,format="%Y-%m-%d")
 rowcount <- nrow(stepData)
+options(scipen=4, digits=8)  ## to ensure data not in scientific notation digits
 ```
-There are  r rowcount` observations
+There are  17568 observations`
 
 ## What is mean total number of steps taken per day?
 First sum the steps by day
@@ -20,42 +21,43 @@ colnames(stepsDay) <- c("date","steps")
 Then create a histogram of steps taken each day
 
 ```r
-hist(stepsDay$steps)
+hist(stepsDay$steps, main="Histogram of Daily Steps", xlab = "Daily Steps")
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+![plot of chunk dayHistogram](figure/dayHistogram.png) 
 
 And use summary to get the mean and median steps per day
 
 ```r
-summary(stepsDay)
+daymean <- summary(stepsDay$steps)[c(4)]
+daymedian <- summary(stepsDay$steps)[c(3)]
 ```
-
-```
-##       date                steps      
-##  Min.   :2012-10-02   Min.   :   41  
-##  1st Qu.:2012-10-16   1st Qu.: 8841  
-##  Median :2012-10-29   Median :10765  
-##  Mean   :2012-10-30   Mean   :10766  
-##  3rd Qu.:2012-11-16   3rd Qu.:13294  
-##  Max.   :2012-11-29   Max.   :21194
-```
-
+Mean is 10766 and median is 10765 -- almost identical
 
 ## What is the average daily activity pattern?
 First aggregate by interval to get mean steps per interval
 
 ```r
-stepMean <- aggregate(stepData$steps ~ as.factor(stepData$interval),FUN = "mean")
+stepMean <- aggregate(stepData$steps ~ stepData$interval,FUN = "mean")
 colnames(stepMean) <- c("interval","meanSteps")
 ```
-Next create a time series plot of average steps per 5-minute interval
+Next create a time series plot of average steps per 5-minute interva
 
 ```r
-with (stepMean, plot(interval, meanSteps, type="l"))
+require(lattice)
+```
+
+```
+## Loading required package: lattice
+```
+
+```r
+xyplot(meanSteps ~ interval, 
+       data=stepMean, t="l", main="Average Steps per Interval",)
 ```
 
 ![plot of chunk intervalPlot](figure/intervalPlot.png) 
+
 The 5-min interval with maximum average steps is 
 
 ```r
@@ -64,7 +66,7 @@ stepMean[stepMean$meanSteps==max(stepMean$meanSteps),]
 
 ```
 ##     interval meanSteps
-## 104      835     206.2
+## 104      835 206.16981
 ```
 
 
@@ -116,7 +118,8 @@ hist(stepsDayFix$steps)
 Fixmean <- summary(stepsDayFix$steps)[4]
 Fixmedian <- summary(stepsDayFix$steps)[3]
 ```
-
+New mean is 10750 vs. old value 10766; 
+New median is 10641 vs. old median 10765 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 Using the dataset that replaces NA values with interval means;
@@ -154,16 +157,11 @@ And prepare chart using lattice
 
 ```r
 require(lattice)
-```
-
-```
-## Loading required package: lattice
-```
-
-```r
 xyplot(steps ~ interval | weekend, layout=c(1,2),
-       data=stepsWeekend, t="l", main="Average Steps per Interval")
+       data=stepsWeekend, t="l", main="Average Steps per 5-min Interval")
 ```
 
 ![plot of chunk weekendCharts](figure/weekendCharts.png) 
+### Chart Interpretation
+
 The chart shows that weekday steps rise around 5:30am and peak between 8am and 9am, and then drop off sharply for the rest of the day.  During the weekend, steps start lower in the morning, but are generally higher the rest of the day, and continue later into the evening.
